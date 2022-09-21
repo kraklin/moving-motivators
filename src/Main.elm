@@ -288,7 +288,7 @@ itemView mode dnd index item =
 
             else
                 Html.div
-                    [ Html.Attributes.class "m-4 w-[200px] h-[170px] scale-110 rounded-md z-0 border-dashed border-2 border-gray-300 "
+                    [ Html.Attributes.class "m-4 w-[220px] h-[200px] scale-110 rounded-md z-0 border-dashed border-2 border-gray-300 "
                     ]
                     []
 
@@ -313,7 +313,7 @@ influenceStyle influence =
 
 cardView mode card =
     Html.div
-        [ Html.Attributes.class "flex flex-col w-[200px] h-[170px] shadow-md rounded-md bg-white"
+        [ Html.Attributes.class "flex flex-col w-[220px] h-[200px] shadow-md rounded-md bg-white"
         , Html.Attributes.class "hover:shadow-2xl hover:z-10"
         , Html.Attributes.class "transition ease-in-out"
         ]
@@ -362,23 +362,6 @@ ghostView mode dnd items =
 
 containerStyles : List (Html.Attribute msg)
 containerStyles =
-    [ Html.Attributes.class "flex flex-wrap" ]
+    [ Html.Attributes.class "flex flex-wrap gap-y-12" ]
 
 
-itemStyles : List (Html.Attribute msg)
-itemStyles =
-    [ Html.Attributes.style "border-radius" "8px"
-    , Html.Attributes.style "height" "200px"
-    , Html.Attributes.style "margin" "10px"
-    , Html.Attributes.style "color" "white"
-    , Html.Attributes.style "font-size" "1.2em"
-    , Html.Attributes.style "display" "flex"
-    , Html.Attributes.style "align-items" "center"
-    , Html.Attributes.style "justify-content" "center"
-    ]
-
-
-ghostStyles : List (Html.Attribute msg)
-ghostStyles =
-    [ Html.Attributes.style "background-color" "white"
-    ]
