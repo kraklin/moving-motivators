@@ -4,17 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Moving motivators</title>
-    <link href="./build/styles.css" rel="stylesheet" />
+    <link href="./src/style.css" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
-    <script src="./build/main.js"></script>
-    <script>
-      window.Elm.Main.init({
-        node: document.getElementById("root"),
-        flags: null
-      });
-    </script>
+    <div id="app"></div>
+    <script type="module" src="./src/app.js"></script>
   </body>
 </html>
 

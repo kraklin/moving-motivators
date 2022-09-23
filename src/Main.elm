@@ -1,12 +1,14 @@
 module Main exposing (Model, Msg, initialModel, main, subscriptions, update, view)
 
 import Browser
+import Browser.Navigation
 import DnDList
 import Html
-import Html.Attributes
+import Html.Attributes as Attrs
 import Html.Events
 import Html.Events.Extra as Events
 import Html.Extra as Html
+import Url exposing (Url)
 
 
 
@@ -15,9 +17,11 @@ import Html.Extra as Html
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.application
         { init = init
         , view = view
+        , onUrlChange = UrlChanged
+        , onUrlRequest = UrlRequest
         , update = update
         , subscriptions = subscriptions
         }
@@ -76,7 +80,7 @@ data =
                     , title = "Freedom"
                     , bubble = "I am independent of others with my own work and responsibilities"
                     , titleStyle = "bg-red-600"
-                    , influence = Negative
+                    , influence = Neutral
                     }
 
                 5 ->
@@ -90,9 +94,9 @@ data =
                 6 ->
                     { id = String.fromInt int
                     , title = "Goal"
-                    , bubble = "My position is good, and recognized by the people who work with me"
+                    , bubble = "My purpose in life is reflected in the work that I do"
                     , titleStyle = "bg-purple-700"
-                    , influence = Positive
+                    , influence = Neutral
                     }
 
                 7 ->
@@ -160,6 +164,7 @@ system =
 type Mode
     = Ordering
     | Influencing
+    | Result
 
 
 
@@ -177,12 +182,12 @@ initialModel : Model
 initialModel =
     { dnd = system.model
     , items = data
-    , mode = Influencing
+    , mode = Ordering
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : () -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init _ url key =
     ( initialModel, Cmd.none )
 
 
@@ -203,11 +208,20 @@ type Msg
     = MyMsg DnDList.Msg
     | SetInfluence String Influence
     | ToggleMode
+    | SetMode Mode
+    | UrlChanged Url
+    | UrlRequest Browser.UrlRequest
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
+        UrlChanged url ->
+            ( model, Cmd.none )
+
+        UrlRequest request ->
+            ( model, Cmd.none )
+
         MyMsg msg ->
             let
                 ( dnd, items ) =
@@ -237,6 +251,8 @@ update message model =
             , Cmd.none
             )
 
+        SetMode mode -> 
+                ( { model | mode = mode }, Cmd.none )
         ToggleMode ->
             if model.mode == Ordering then
                 ( { model | mode = Influencing }, Cmd.none )
@@ -249,20 +265,66 @@ update message model =
 -- VIEW
 
 
-view : Model -> Html.Html Msg
+stepView mode =
+    case mode of
+        Ordering ->
+            Html.div [ Attrs.class "mt-6 text-md" ]
+                [ Html.h2 [ Attrs.class "text-[2rem]" ] [ Html.text "Step One" ]
+                , Html.p [Attrs.class "mt-4"]
+                    [ Html.text "Define which motivators are important to you." ]
+                , Html.p [Attrs.class "mt-4"]
+                    [ Html.text "Place the cards in order from 1 (least important) to 10 (most important)" ]
+                , Html.p [Attrs.class "mt-4"]
+                    [ Html.text "When you are done with ordering the cards, you can continue with Step 2." ]
+                , Html.button [Html.Events.onClick <| SetMode Influencing][Html.text "Continue with Step 2"]
+                ]
+
+        Influencing ->
+            Html.div [Attrs.class "mt-6 text-md"]
+                [ Html.h2 [ Attrs.class "text-[2rem]" ] [ Html.text "Step Two" ]
+                , Html.p [Attrs.class "mt-4"]
+                    [ Html.text "Discuss how change affects your motivators."]
+                , Html.p [Attrs.class "mt-4"]
+                    [ Html.text "For example: If you’re wondering if you should change jobs, which would mean moving to another city, learning a new skill and making all new friends, how does that affect what motivates you? It’ll most likely increase some motivators and decrease others."
+                    ]
+                , Html.p [Attrs.class "mt-4"]
+                    [ Html.text "Move the cards up with 👍 for a positive change and down with 👎 for a negative one. Move the cards to the neutral position with \u{1F7F0} " ]
+                , Html.p [Attrs.class "mt-4"]
+                    [ Html.text "Then look at whether you have more cards up or down. This is a great way to help make decisions." ]
+                , Html.button [Html.Events.onClick <| SetMode Result][Html.text "Continue with Step 3"]
+                ]
+
+        Result ->
+            Html.div []
+                [ Html.h2 [ Attrs.class "" ]
+                    [ Html.text "Step Three" ]
+                , Html.p []
+                    [ Html.text "Time for reflection and discussion. Talk to your teammates about which motivators are least and most important to them. This will give you better insight into what drives your colleagues and allow you to create stronger relationships and increase collaboration. Use it also as a tool to reflect and assess your own life decisions. When most of your important motivators go down or when the least important ones go up it might be time for reflection."
+                    ]
+                ]
+
+
+view : Model -> Browser.Document Msg
 view model =
-    Html.div
-        [ Html.Attributes.class "flex flex-col justify-center h-screen"
-        ]
-        [ Html.section
-            []
-            [ model.items
-                |> List.indexedMap (itemView model.mode model.dnd)
-                |> Html.div containerStyles
-            , ghostView model.mode model.dnd model.items
+    { title = "Moving motivators"
+    , body =
+        [ Html.div
+            [ Attrs.class "flex flex-col h-screen"
             ]
-        , Html.button [ Html.Events.onClick ToggleMode ] [ Html.text "Switch mode" ]
+            [ Html.h1 [ Attrs.class "px-4 py-2 bg-blue-500 text-white text-center text-2xl" ]
+                [ Html.text "Moving motivators"
+                ]
+            , Html.section [ Attrs.class "mx-auto px-6 max-w-[800px]" ] [ stepView model.mode ]
+            , Html.section
+                [ Attrs.class "px-8 my-16" ]
+                [ model.items
+                    |> List.indexedMap (itemView model.mode model.dnd)
+                    |> Html.div containerStyles
+                , ghostView model.mode model.dnd model.items
+                ]
+            ]
         ]
+    }
 
 
 itemView : Mode -> DnDList.Model -> Int -> Item -> Html.Html Msg
@@ -274,38 +336,73 @@ itemView mode dnd index item =
 
         attrs : List (Html.Attribute msg)
         attrs =
-            [ Html.Attributes.class "m-4 hover:cursor-pointer"
-            , Html.Attributes.id itemId
+            [ Attrs.class "m-4 hover:cursor-pointer"
+            , Attrs.class "transition ease-in-out"
+            , Attrs.id itemId
             , influenceStyle item.influence
             ]
+
+        numberView =
+            let
+                colour =
+                    case item.influence of
+                        Positive ->
+                            Attrs.class "text-green-500"
+
+                        Negative ->
+                            Attrs.class "text-red-500"
+
+                        Neutral ->
+                            Attrs.class "text-gray-300"
+
+                importance =
+                    if index == 0 then
+                        Html.text "least important"
+
+                    else if index == 9 then
+                        Html.text "most important"
+
+                    else
+                        Html.nothing
+            in
+            Html.div [ Attrs.class "relative overflow-hidden h-[3rem] mb-1" ]
+                [ Html.div
+                    [ Attrs.class "absolute -top-[1.2rem] flex justify-between items-center text-[4rem] font-bold w-[150px]"
+                    , colour
+                    ]
+                    [ Html.text <| String.fromInt (index + 1), Html.span [ Attrs.class "text-xs text-gray-800 text-right ml-4" ] [ importance ] ]
+                ]
     in
     case system.info dnd of
         Just { dragIndex } ->
             if dragIndex /= index then
                 Html.div
                     (attrs ++ system.dropEvents index itemId)
-                    [ cardView mode item ]
+                    [ numberView, cardView mode item ]
 
             else
-                Html.div
-                    [ Html.Attributes.class "m-4 w-[220px] h-[200px] scale-110 rounded-md z-0 border-dashed border-2 border-gray-300 "
+                Html.div []
+                    [ numberView
+                    , Html.div
+                        [ Attrs.class "m-4 w-[150px] h-[200px] scale-110 rounded-md z-0 border-dashed border-2 border-gray-300 "
+                        ]
+                        []
                     ]
-                    []
 
         Nothing ->
             Html.div
                 (attrs ++ system.dragEvents index itemId)
-                [ cardView mode item ]
+                [ numberView, cardView mode item ]
 
 
 influenceStyle influence =
-    Html.Attributes.class <|
+    Attrs.class <|
         case influence of
             Positive ->
-                "-translate-y-8"
+                "-translate-y-12"
 
             Negative ->
-                "translate-y-8"
+                "translate-y-12"
 
             Neutral ->
                 ""
@@ -313,24 +410,24 @@ influenceStyle influence =
 
 cardView mode card =
     Html.div
-        [ Html.Attributes.class "flex flex-col w-[220px] h-[200px] shadow-md rounded-md bg-white"
-        , Html.Attributes.class "hover:shadow-2xl hover:z-10"
-        , Html.Attributes.class "transition ease-in-out"
+        [ Attrs.class "flex flex-col w-[150px] h-[200px] shadow-md rounded-md bg-white"
+        , Attrs.class "hover:shadow-2xl hover:z-10"
+        , Attrs.class "transition ease-in-out"
         ]
         [ Html.div
-            [ Html.Attributes.class card.titleStyle
-            , Html.Attributes.class "px-4 py-2 uppercase text-center text-white font-bold"
+            [ Attrs.class card.titleStyle
+            , Attrs.class "px-4 py-2 uppercase text-center text-white font-bold"
             ]
             [ Html.text card.title ]
         , Html.div
-            [ Html.Attributes.class "flex-grow px-4 py-2"
+            [ Attrs.class "flex flex-grow items-center px-4 py-2 text-xs text-gray-700"
             ]
-            [ Html.text card.bubble ]
+            [ Html.p [] [ Html.text card.bubble ] ]
         , Html.viewIf (mode == Influencing) <|
-            Html.div [ Html.Attributes.class "flex" ]
-                [ Html.button [ Html.Attributes.class "px-2 py-1 flex-grow bg-green-200", Events.onClickPreventDefaultAndStopPropagation <| SetInfluence card.id Positive ] [ Html.text "👍" ]
-                , Html.button [ Html.Attributes.class "px-2 py-1 flex-grow bg-gray-200", Events.onClickPreventDefaultAndStopPropagation <| SetInfluence card.id Neutral ] [ Html.text "😐" ]
-                , Html.button [ Html.Attributes.class "px-2 py-1 flex-grow bg-red-200", Events.onClickPreventDefaultAndStopPropagation <| SetInfluence card.id Negative ] [ Html.text "👎" ]
+            Html.div [ Attrs.class "flex" ]
+                [ Html.button [ Attrs.class "px-2 py-1 flex-grow bg-green-100", Events.onClickPreventDefaultAndStopPropagation <| SetInfluence card.id Positive ] [ Html.text "👍" ]
+                , Html.button [ Attrs.class "px-2 py-1 flex-grow bg-gray-100", Events.onClickPreventDefaultAndStopPropagation <| SetInfluence card.id Neutral ] [ Html.text "\u{1F7F0}" ]
+                , Html.button [ Attrs.class "px-2 py-1 flex-grow bg-red-100", Events.onClickPreventDefaultAndStopPropagation <| SetInfluence card.id Negative ] [ Html.text "👎" ]
                 ]
         ]
 
@@ -346,7 +443,7 @@ ghostView mode dnd items =
     case maybeDragItem of
         Just item ->
             Html.div
-                (Html.Attributes.class "m-4"
+                (Attrs.class "m-4"
                     :: influenceStyle item.influence
                     :: system.ghostStyles dnd
                 )
@@ -362,6 +459,4 @@ ghostView mode dnd items =
 
 containerStyles : List (Html.Attribute msg)
 containerStyles =
-    [ Html.Attributes.class "flex flex-wrap gap-y-12" ]
-
-
+    [ Attrs.class "flex flex-wrap gap-y-20" ]

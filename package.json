@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "run-pty % elm-watch hot % tailwindcss -i ./src/style.css -o ./build/styles.css --watch"
+    "start": "vite"
   },
   "author": "",
   "license": "ISC",
@@ -15,7 +15,8 @@
     "vite-plugin-elm": "^2.7.2"
   },
   "devDependencies": {
-    "elm-watch": "^1.0.2",
+    "autoprefixer": "^10.4.12",
+    "postcss": "^8.4.16",
     "tailwindcss": "^3.1.8"
   }
 }
