@@ -2,10 +2,11 @@ module Main exposing (Model, Msg, initialModel, main, subscriptions, update, vie
 
 import Browser
 import Browser.Navigation
+import Card exposing (Card, Influence(..))
 import DnDList
 import Html
 import Html.Attributes as Attrs
-import Html.Events
+import Html.Events as Events
 import Html.Events.Extra as Events
 import Html.Extra as Html
 import Url exposing (Url)
@@ -28,126 +29,10 @@ main =
 
 
 
--- DATA
-
-
-type Influence
-    = Positive
-    | Neutral
-    | Negative
-
-
-type alias Item =
-    { id : String
-    , title : String
-    , bubble : String
-    , titleStyle : String
-    , influence : Influence
-    }
-
-
-data : List Item
-data =
-    let
-        fromInt int =
-            case int of
-                1 ->
-                    { id = String.fromInt int
-                    , title = "Curiosity"
-                    , bubble = "I have plenty of things to investigate and to think about"
-                    , titleStyle = "bg-orange-500"
-                    , influence = Neutral
-                    }
-
-                2 ->
-                    { id = String.fromInt int
-                    , title = "Honor"
-                    , bubble = "I feel proud that my personal values are reflected in how I work"
-                    , titleStyle = "bg-blue-400"
-                    , influence = Neutral
-                    }
-
-                3 ->
-                    { id = String.fromInt int
-                    , title = "Acceptance"
-                    , bubble = "The people around me approve of what I do and who I am"
-                    , titleStyle = "bg-yellow-500"
-                    , influence = Neutral
-                    }
-
-                4 ->
-                    { id = String.fromInt int
-                    , title = "Freedom"
-                    , bubble = "I am independent of others with my own work and responsibilities"
-                    , titleStyle = "bg-red-600"
-                    , influence = Neutral
-                    }
-
-                5 ->
-                    { id = String.fromInt int
-                    , title = "Status"
-                    , bubble = "My position is good, and recognized by the people who work with me"
-                    , titleStyle = "bg-pink-500"
-                    , influence = Neutral
-                    }
-
-                6 ->
-                    { id = String.fromInt int
-                    , title = "Goal"
-                    , bubble = "My purpose in life is reflected in the work that I do"
-                    , titleStyle = "bg-purple-700"
-                    , influence = Neutral
-                    }
-
-                7 ->
-                    { id = String.fromInt int
-                    , title = "Order"
-                    , bubble = "There are enough rules and policies for a stable environment"
-                    , titleStyle = "bg-red-300"
-                    , influence = Neutral
-                    }
-
-                8 ->
-                    { id = String.fromInt int
-                    , title = "Mastery"
-                    , bubble = "My work challenges my competence but it is still within my abilities"
-                    , titleStyle = "bg-teal-400"
-                    , influence = Neutral
-                    }
-
-                9 ->
-                    { id = String.fromInt int
-                    , title = "Power"
-                    , bubble = "There’s enough room for me to influence what happens around me"
-                    , titleStyle = "bg-yellow-700"
-                    , influence = Neutral
-                    }
-
-                0 ->
-                    { id = String.fromInt int
-                    , title = "Relatedness"
-                    , bubble = "I have good social contacts with the people in and around my work"
-                    , titleStyle = "bg-green-700"
-                    , influence = Neutral
-                    }
-
-                _ ->
-                    { id = String.fromInt int
-                    , title = "EMPTY CARD"
-                    , bubble = "This is just empty card"
-                    , titleStyle = "bg-red-300"
-                    , influence = Neutral
-                    }
-    in
-    List.range 0 9
-        |> List.map fromInt
-
-
-
 -- SYSTEM
 
 
-config : DnDList.Config Item
+config : DnDList.Config Card
 config =
     { beforeUpdate = \_ _ list -> list
     , movement = DnDList.Free
@@ -156,7 +41,7 @@ config =
     }
 
 
-system : DnDList.System Item Msg
+system : DnDList.System Card Msg
 system =
     DnDList.create config MyMsg
 
@@ -173,7 +58,7 @@ type Mode
 
 type alias Model =
     { dnd : DnDList.Model
-    , items : List Item
+    , items : List Card
     , mode : Mode
     }
 
@@ -181,7 +66,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { dnd = system.model
-    , items = data
+    , items = Card.deck
     , mode = Ordering
     }
 
@@ -251,8 +136,9 @@ update message model =
             , Cmd.none
             )
 
-        SetMode mode -> 
-                ( { model | mode = mode }, Cmd.none )
+        SetMode mode ->
+            ( { model | mode = mode }, Cmd.none )
+
         ToggleMode ->
             if model.mode == Ordering then
                 ( { model | mode = Influencing }, Cmd.none )
@@ -270,28 +156,29 @@ stepView mode =
         Ordering ->
             Html.div [ Attrs.class "mt-6 text-md" ]
                 [ Html.h2 [ Attrs.class "text-[2rem]" ] [ Html.text "Step One" ]
-                , Html.p [Attrs.class "mt-4"]
+                , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "Define which motivators are important to you." ]
-                , Html.p [Attrs.class "mt-4"]
+                , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "Place the cards in order from 1 (least important) to 10 (most important)" ]
-                , Html.p [Attrs.class "mt-4"]
+                , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "When you are done with ordering the cards, you can continue with Step 2." ]
-                , Html.button [Html.Events.onClick <| SetMode Influencing][Html.text "Continue with Step 2"]
+                , Html.button [ Events.onClick <| SetMode Influencing ]
+                    [ Html.text "Continue with Step 2" ]
                 ]
 
         Influencing ->
-            Html.div [Attrs.class "mt-6 text-md"]
+            Html.div [ Attrs.class "mt-6 text-md" ]
                 [ Html.h2 [ Attrs.class "text-[2rem]" ] [ Html.text "Step Two" ]
-                , Html.p [Attrs.class "mt-4"]
-                    [ Html.text "Discuss how change affects your motivators."]
-                , Html.p [Attrs.class "mt-4"]
+                , Html.p [ Attrs.class "mt-4" ]
+                    [ Html.text "Discuss how change affects your motivators." ]
+                , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "For example: If you’re wondering if you should change jobs, which would mean moving to another city, learning a new skill and making all new friends, how does that affect what motivates you? It’ll most likely increase some motivators and decrease others."
                     ]
-                , Html.p [Attrs.class "mt-4"]
+                , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "Move the cards up with 👍 for a positive change and down with 👎 for a negative one. Move the cards to the neutral position with \u{1F7F0} " ]
-                , Html.p [Attrs.class "mt-4"]
+                , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "Then look at whether you have more cards up or down. This is a great way to help make decisions." ]
-                , Html.button [Html.Events.onClick <| SetMode Result][Html.text "Continue with Step 3"]
+                , Html.button [ Events.onClick <| SetMode Result ] [ Html.text "Continue with Step 3" ]
                 ]
 
         Result ->
@@ -327,7 +214,7 @@ view model =
     }
 
 
-itemView : Mode -> DnDList.Model -> Int -> Item -> Html.Html Msg
+itemView : Mode -> DnDList.Model -> Int -> Card -> Html.Html Msg
 itemView mode dnd index item =
     let
         itemId : String
@@ -432,10 +319,10 @@ cardView mode card =
         ]
 
 
-ghostView : Mode -> DnDList.Model -> List Item -> Html.Html Msg
+ghostView : Mode -> DnDList.Model -> List Card -> Html.Html Msg
 ghostView mode dnd items =
     let
-        maybeDragItem : Maybe Item
+        maybeDragItem : Maybe Card
         maybeDragItem =
             system.info dnd
                 |> Maybe.andThen (\{ dragIndex } -> items |> List.drop dragIndex |> List.head)
