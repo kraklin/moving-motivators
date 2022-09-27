@@ -1,7 +1,7 @@
 module Main exposing (Model, Msg, initialModel, main, subscriptions, update, view)
 
 import Browser
-import Browser.Navigation
+import Browser.Navigation as Nav
 import Card exposing (Card, Influence(..))
 import DnDList
 import Html
@@ -60,22 +60,46 @@ type alias Model =
     { dnd : DnDList.Model
     , items : List Card
     , mode : Mode
+    , url : Url
+    , key : Nav.Key
     }
 
 
-initialModel : Model
-initialModel =
+initialModel : Url -> Nav.Key -> Model
+initialModel url key =
     { dnd = system.model
     , items = Card.deck
     , mode = Ordering
+    , url = url
+    , key = key
     }
 
 
-init : () -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
+init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    ( initialModel, Cmd.none )
+    let
+        initialModel_ =
+            initialModel url key
 
+        result =
+            Url.toString url
+                |> String.split "#"
+                |> List.reverse
+                |> List.head
+                |> Maybe.map Card.decode
+                |> Maybe.andThen
+                    (\initialDeck ->
+                        if List.length initialDeck /= 10 then
+                            Nothing
 
+                        else
+                            Just { initialModel_ | items = initialDeck, mode = Result }
+                    )
+                |> Maybe.withDefault initialModel_
+    in
+    ( result, Cmd.none )
+
+deckUrl url deck= (Url.toString <| { url | fragment = Nothing }) ++ "#" ++ Card.encode deck
 
 -- SUBSCRIPTIONS
 
@@ -106,10 +130,19 @@ update message model =
             ( model, Cmd.none )
 
         UrlChanged url ->
-            ( model, Cmd.none )
+          (model, Cmd.none)
 
         UrlRequest request ->
-            ( model, Cmd.none )
+          case request of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl model.key (Url.toString url)
+                    )
+
+                Browser.External url ->
+                    ( model
+                    , Nav.load url
+                    )
 
         MyMsg msg ->
             let
@@ -141,7 +174,11 @@ update message model =
             )
 
         SetMode mode ->
-            ( { model | mode = mode }, Cmd.none )
+          let
+              cmd = 
+                  Nav.replaceUrl model.key (deckUrl model.url model.items)
+          in
+            ( { model | mode = mode }, cmd )
 
         ToggleMode ->
             if model.mode == Ordering then
@@ -155,7 +192,7 @@ update message model =
 -- VIEW
 
 
-stepView mode =
+stepView mode deck url =
     case mode of
         Ordering ->
             Html.div [ Attrs.class "mt-6 text-md" ]
@@ -197,6 +234,11 @@ stepView mode =
                 , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "Talk to your teammates about which motivators are least and most important to them. This will give you better insight into what drives your colleagues and allow you to create stronger relationships and increase collaboration. Use it also as a tool to reflect and assess your own life decisions. When most of your important motivators go down or when the least important ones go up it might be time for reflection."
                     ]
+                , Html.p [ Attrs.class "mt-8 font-semibold text-center" ]
+                    [ Html.text "You can share your results (or access them later at the URL below)" ]
+                , Html.p [ Attrs.class "mt-4 text-center px-4 py-2 bg-gray-200 text-gray-700 font-mono" ]
+                    [ Html.text <| deckUrl url deck
+                    ]
                 , Html.div [ Attrs.class "flex justify-between items-center mt-8" ]
                     [ secondaryButtonView (SetMode Ordering) "Go back to reorder your cards (Step 1)"
                     , secondaryButtonView (SetMode Influencing) "Go back to move them up or down (Step 2)"
@@ -214,7 +256,7 @@ view model =
             [ Html.h1 [ Attrs.class "px-4 py-2 bg-blue-500 text-white text-center text-2xl" ]
                 [ Html.text "Moving motivators"
                 ]
-            , Html.section [ Attrs.class "mx-auto px-6 max-w-[800px]" ] [ stepView model.mode ]
+            , Html.section [ Attrs.class "mx-auto px-6 max-w-[800px]" ] [ stepView model.mode model.items model.url ]
             , Html.section
                 [ Attrs.class "px-8 my-16" ]
                 [ model.items
