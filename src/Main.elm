@@ -99,7 +99,11 @@ init _ url key =
     in
     ( result, Cmd.none )
 
-deckUrl url deck= (Url.toString <| { url | fragment = Nothing }) ++ "#" ++ Card.encode deck
+
+deckUrl url deck =
+    (Url.toString <| { url | fragment = Nothing }) ++ "#" ++ Card.encode deck
+
+
 
 -- SUBSCRIPTIONS
 
@@ -130,10 +134,10 @@ update message model =
             ( model, Cmd.none )
 
         UrlChanged url ->
-          (model, Cmd.none)
+            ( model, Cmd.none )
 
         UrlRequest request ->
-          case request of
+            case request of
                 Browser.Internal url ->
                     ( model
                     , Nav.pushUrl model.key (Url.toString url)
@@ -174,10 +178,10 @@ update message model =
             )
 
         SetMode mode ->
-          let
-              cmd = 
-                  Nav.replaceUrl model.key (deckUrl model.url model.items)
-          in
+            let
+                cmd =
+                    Nav.replaceUrl model.key (deckUrl model.url model.items)
+            in
             ( { model | mode = mode }, cmd )
 
         ToggleMode ->
@@ -258,7 +262,7 @@ view model =
                 ]
             , Html.section [ Attrs.class "mx-auto px-6 max-w-[800px]" ] [ stepView model.mode model.items model.url ]
             , Html.section
-                [ Attrs.class "px-8 my-16" ]
+                [ Attrs.class "px-8 my-16 mx-auto max-w-[1890px]" ]
                 [ model.items
                     |> List.indexedMap (itemView model.mode model.dnd)
                     |> Html.div containerStyles
