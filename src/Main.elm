@@ -134,7 +134,7 @@ update message model =
             ( model, Cmd.none )
 
         UrlChanged url ->
-            ( model, Cmd.none )
+            init () url model.key
 
         UrlRequest request ->
             case request of
