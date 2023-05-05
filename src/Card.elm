@@ -240,6 +240,7 @@ encode list =
                     "."
     in
     list
+        |> List.reverse
         |> List.foldl (\item acc -> acc ++ [ item.id, influenceString item.influence ]) []
         |> String.join ""
 
@@ -261,6 +262,7 @@ decode toDecode =
         |> String.toList
         |> List.map String.fromChar
         |> List.groupsOf 2
+        |> List.reverse
         |> List.filterMap groupToCard
 
 

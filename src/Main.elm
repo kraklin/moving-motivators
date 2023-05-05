@@ -204,7 +204,7 @@ stepView mode deck url =
                 , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "Define which motivators are important to you." ]
                 , Html.p [ Attrs.class "mt-4" ]
-                    [ Html.text "Place the cards in order from 1 (least important) to 10 (most important)" ]
+                    [ Html.text "Place the cards in order from 1 (most important) to 10 (least important)" ]
                 , Html.p [ Attrs.class "mt-4" ]
                     [ Html.text "When you are done with ordering the cards, you can continue with Step 2." ]
                 , Html.div [ Attrs.class "flex justify-end mt-8" ]
@@ -319,10 +319,10 @@ itemView mode dnd index item =
 
                 importance =
                     if index == 0 then
-                        Html.text "least important"
+                        Html.text "most important"
 
                     else if index == 9 then
-                        Html.text "most important"
+                        Html.text "least important"
 
                     else
                         Html.nothing
