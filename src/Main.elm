@@ -134,7 +134,12 @@ update message model =
             ( model, Cmd.none )
 
         UrlChanged url ->
+            let
+                modelWithStepKept m =
+                    { m | mode = model.mode }
+            in
             init () url model.key
+                |> Tuple.mapFirst modelWithStepKept
 
         UrlRequest request ->
             case request of
